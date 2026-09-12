@@ -39,6 +39,7 @@ const I18N = {
     sheet_broken: "Signalée en panne.",
     duration: "Durée du cycle", minutes: "min", custom: "autre",
     notify_me: "Me prévenir à la fin", notify_hint: "Notification locale sur cet appareil, rien n'est envoyé au serveur. Fonctionne tant que l'app reste ouverte en arrière-plan.",
+    notify_unsupported: "Pour être prévenu à la fin : ajoute l'app à l'écran d'accueil (Partager → Sur l'écran d'accueil), puis rouvre-la depuis là.",
     start: "Lancée !", collected: "Récupéré, machine libre", cancel: "Erreur, annuler", report_broken: "Signaler en panne",
     fixed: "Elle remarche", report_again: "Toujours en panne", note_ph: "Quel problème ? (facultatif)",
     remind: "Me prévenir à la fin", remind_set: "Rappel activé", remind_denied: "Notifications refusées par le navigateur",
@@ -78,6 +79,7 @@ const I18N = {
     sheet_broken: "Reported out of order.",
     duration: "Cycle length", minutes: "min", custom: "other",
     notify_me: "Notify me when done", notify_hint: "Local notification on this device only; nothing is sent to the server. Works while the app stays open in the background.",
+    notify_unsupported: "To get notified: add the app to your Home Screen (Share → Add to Home Screen), then open it from there.",
     start: "Started!", collected: "Collected, machine is free", cancel: "Mistake, cancel", report_broken: "Report out of order",
     fixed: "It works again", report_again: "Still broken", note_ph: "What's wrong? (optional)",
     remind: "Notify me when done", remind_set: "Reminder set", remind_denied: "Notifications blocked by the browser",
@@ -214,14 +216,14 @@ function renderSheet() {
     const chips = PRESETS[m.kind].map((v) => el("button", { class: "chip", type: "button", "aria-pressed": String(v === minutes), onclick: (e) => { minutes = v; input.value = v; chips.forEach((c) => c.setAttribute("aria-pressed", String(c === e.currentTarget))); } }, `${v} ${t("minutes")}`));
     const input = el("input", { type: "number", id: "minutes", min: 1, max: 180, step: 1, value: minutes, inputmode: "numeric",
       oninput: (e) => { minutes = Number(e.target.value); chips.forEach((c) => c.setAttribute("aria-pressed", "false")); } });
-    const notify = el("input", { type: "checkbox", id: "notify", checked: "Notification" in window && Notification.permission === "granted" ? "" : null });
-    if (!("Notification" in window)) notify.disabled = true;
+    const canNotify = "Notification" in window;
+    const notify = el("input", { type: "checkbox", id: "notify", checked: canNotify && Notification.permission === "granted" ? "" : null });
     body.replaceChildren(
       el("p", { class: "hint" }, t("duration")),
       el("div", { class: "chips" }, ...chips),
       el("div", { class: "field" }, el("label", { for: "minutes", class: "muted small" }, t("custom")), input, el("span", { class: "muted small" }, t("minutes"))),
-      el("label", { class: "check", for: "notify" }, notify, t("notify_me")),
-      el("p", { class: "hint" }, t("notify_hint")),
+      canNotify ? el("label", { class: "check", for: "notify" }, notify, t("notify_me")) : null,
+      el("p", { class: "hint" }, canNotify ? t("notify_hint") : t("notify_unsupported")),
       el("div", { class: "actions" },
         el("button", { class: `btn ${btnTone} btn--block`, type: "button", onclick: () => doStart(m, minutes, notify.checked) }, t("start")),
         brokenBtn(t("report_broken")),
@@ -235,7 +237,7 @@ function renderSheet() {
         el("button", { class: "btn btn--primary btn--block", type: "button", onclick: () => act(m, "collect", {}, t("collected")) }, t("collected")),
         m.status === "running" && "Notification" in window
           ? el("button", { class: "btn", type: "button", disabled: hasReminder ? "" : null, onclick: () => setReminder(m) }, hasReminder ? t("remind_set") : t("remind"))
-          : null,
+          : m.status === "running" ? el("p", { class: "hint" }, t("notify_unsupported")) : null,
         m.status === "running" && state.mine[m.id] !== undefined
           ? el("button", { class: "btn", type: "button", onclick: () => act(m, "cancel", {}, null) }, t("cancel"))
           : null,
