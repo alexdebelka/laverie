@@ -15,8 +15,8 @@ No accounts, no cookies, no tracking. The server only ever stores
 - **Auto-healing state** — a cycle becomes "done" when the timer ends, and "free" after a
   grace period; a broken flag expires after a week unless someone re-reports it.
 - **Busy hours** — weekday × hour heatmap built from anonymous start events.
-- **Local reminders** — optional notification when your cycle ends, scheduled on the device
-  only; nothing is sent to the server.
+- **Reminders without data** — a browser notification (where supported) or a one-tap calendar
+  event (.ics) with an alarm at cycle end; nothing is sent to or stored on the server.
 - **Practical info** and an **anonymous feedback** box.
 - French/English, light/dark, installable PWA, works offline for the shell.
 
@@ -79,6 +79,7 @@ All responses are JSON and `Cache-Control: no-store`.
 | POST   | `/api/machines/:id/broken`      | `{ "note": "…" }`    | Note optional, ≤ 140 chars |
 | POST   | `/api/machines/:id/fixed`       |                      | Clears the broken flag |
 | GET    | `/api/busy?tz=120`              |                      | 7×24 matrix of start counts, `tz` = local offset in minutes |
+| GET    | `/api/reminder.ics?ends=…&label=…&kind=…&lang=…` | | Calendar event with an alarm at cycle end; built from the query string, nothing stored |
 | POST   | `/api/feedback`                 | `{ "message": "…" }` | 3–500 chars, anonymous |
 
 Writes are rate-limited per client (30/min for machine actions, 5 per 10 min for feedback)

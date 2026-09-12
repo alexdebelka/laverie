@@ -39,10 +39,10 @@ const I18N = {
     sheet_broken: "Signalée en panne.",
     duration: "Durée du cycle", minutes: "min", custom: "autre",
     notify_me: "Me prévenir à la fin", notify_hint: "Notification locale sur cet appareil, rien n'est envoyé au serveur. Fonctionne tant que l'app reste ouverte en arrière-plan.",
-    notify_unsupported: "Pour être prévenu à la fin : ajoute l'app à l'écran d'accueil (Partager → Sur l'écran d'accueil), puis rouvre-la depuis là.",
+    notify_unsupported_short: "Après le lancement, tu pourras ajouter un rappel dans ton calendrier.",
     start: "Lancée !", collected: "Récupéré, machine libre", cancel: "Erreur, annuler", report_broken: "Signaler en panne",
     fixed: "Elle remarche", report_again: "Toujours en panne", note_ph: "Quel problème ? (facultatif)",
-    remind: "Me prévenir à la fin", remind_set: "Rappel activé", remind_denied: "Notifications refusées par le navigateur",
+    remind: "Me prévenir à la fin", calendar: "Rappel dans mon calendrier", calendar_hint: "Crée un événement avec alarme à la fin du cycle, sur ton téléphone uniquement.", remind_set: "Rappel activé", remind_denied: "Notifications refusées par le navigateur",
     notif_title: (k, l) => `${k} n°${l} terminée`, notif_body: "Le cycle est fini, tu peux récupérer ton linge.",
     err_running: "Quelqu'un vient de la lancer.", err_minutes: "Durée entre 1 et 180 min.", err_broken: "Signalée en panne, appuie d'abord sur « Elle remarche ».", err_rate: "Trop d'actions, patiente une minute.", err_generic: "Ça n'a pas marché, réessaie.",
     days: ["Lun", "Mar", "Mer", "Jeu", "Ven", "Sam", "Dim"],
@@ -79,10 +79,10 @@ const I18N = {
     sheet_broken: "Reported out of order.",
     duration: "Cycle length", minutes: "min", custom: "other",
     notify_me: "Notify me when done", notify_hint: "Local notification on this device only; nothing is sent to the server. Works while the app stays open in the background.",
-    notify_unsupported: "To get notified: add the app to your Home Screen (Share → Add to Home Screen), then open it from there.",
+    notify_unsupported_short: "After starting, you can add a reminder to your calendar.",
     start: "Started!", collected: "Collected, machine is free", cancel: "Mistake, cancel", report_broken: "Report out of order",
     fixed: "It works again", report_again: "Still broken", note_ph: "What's wrong? (optional)",
-    remind: "Notify me when done", remind_set: "Reminder set", remind_denied: "Notifications blocked by the browser",
+    remind: "Notify me when done", calendar: "Reminder in my calendar", calendar_hint: "Creates a calendar event with an alarm at the end of the cycle, on your phone only.", remind_set: "Reminder set", remind_denied: "Notifications blocked by the browser",
     notif_title: (k, l) => `${k} #${l} finished`, notif_body: "The cycle is done, you can collect your laundry.",
     err_running: "Someone just started it.", err_minutes: "Length must be 1–180 min.", err_broken: "Reported out of order, tap \"It works again\" first.", err_rate: "Too many actions, wait a minute.", err_generic: "That didn't work, try again.",
     days: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
@@ -120,6 +120,9 @@ const el = (tag, attrs = {}, ...children) => {
   for (const c of children.flat()) if (c !== null && c !== undefined) n.append(c);
   return n;
 };
+
+/** replaceChildren that ignores null/undefined (conditional elements). */
+const fill = (node, ...kids) => node.replaceChildren(...kids.filter((k) => k !== null && k !== undefined));
 
 const nowServer = () => state.serverNow + (Date.now() - state.fetchedAt) / 1000;
 
@@ -218,12 +221,12 @@ function renderSheet() {
       oninput: (e) => { minutes = Number(e.target.value); chips.forEach((c) => c.setAttribute("aria-pressed", "false")); } });
     const canNotify = "Notification" in window;
     const notify = el("input", { type: "checkbox", id: "notify", checked: canNotify && Notification.permission === "granted" ? "" : null });
-    body.replaceChildren(
+    fill(body, 
       el("p", { class: "hint" }, t("duration")),
       el("div", { class: "chips" }, ...chips),
       el("div", { class: "field" }, el("label", { for: "minutes", class: "muted small" }, t("custom")), input, el("span", { class: "muted small" }, t("minutes"))),
       canNotify ? el("label", { class: "check", for: "notify" }, notify, t("notify_me")) : null,
-      el("p", { class: "hint" }, canNotify ? t("notify_hint") : t("notify_unsupported")),
+      el("p", { class: "hint" }, canNotify ? t("notify_hint") : t("notify_unsupported_short")),
       el("div", { class: "actions" },
         el("button", { class: `btn ${btnTone} btn--block`, type: "button", onclick: () => doStart(m, minutes, notify.checked) }, t("start")),
         brokenBtn(t("report_broken")),
@@ -232,12 +235,14 @@ function renderSheet() {
   } else if (m.status === "running" || m.status === "done") {
     $("#sheet-sub").textContent = m.status === "running" ? t("sheet_running", fmtDuration(m.remaining_s)) : t("sheet_done");
     const hasReminder = state.reminders[m.id] !== undefined;
-    body.replaceChildren(
+    fill(body, 
       el("div", { class: "actions" },
         el("button", { class: "btn btn--primary btn--block", type: "button", onclick: () => act(m, "collect", {}, t("collected")) }, t("collected")),
         m.status === "running" && "Notification" in window
           ? el("button", { class: "btn", type: "button", disabled: hasReminder ? "" : null, onclick: () => setReminder(m) }, hasReminder ? t("remind_set") : t("remind"))
-          : m.status === "running" ? el("p", { class: "hint" }, t("notify_unsupported")) : null,
+          : null,
+        m.status === "running" ? el("a", { class: "btn", href: icsUrl(m), target: "_blank", rel: "noopener" }, t("calendar")) : null,
+        m.status === "running" ? el("p", { class: "hint" }, t("calendar_hint")) : null,
         m.status === "running" && state.mine[m.id] !== undefined
           ? el("button", { class: "btn", type: "button", onclick: () => act(m, "cancel", {}, null) }, t("cancel"))
           : null,
@@ -246,7 +251,7 @@ function renderSheet() {
     );
   } else {
     $("#sheet-sub").textContent = t("sheet_broken") + (m.broken_note ? ` « ${m.broken_note} »` : "");
-    body.replaceChildren(
+    fill(body, 
       el("div", { class: "actions" },
         el("button", { class: "btn btn--primary btn--block", type: "button", onclick: () => act(m, "fixed", {}, null) }, t("fixed")),
         brokenBtn(t("report_again")),
@@ -257,7 +262,7 @@ function renderSheet() {
 
 function askBroken(m) {
   const note = el("input", { type: "text", id: "note", maxlength: 140, placeholder: t("note_ph") });
-  $("#sheet-body").replaceChildren(
+  fill($("#sheet-body"), 
     el("div", { class: "field" }, note),
     el("div", { class: "actions" },
       el("button", { class: "btn btn--danger btn--block", type: "button", onclick: () => act(m, "broken", { note: note.value }, null) }, t("report_broken")),
@@ -328,6 +333,12 @@ async function doStart(m, minutes, notify) {
   if (!data) return;
   if (notify && !granted) toast(t("remind_denied"));
   if (granted) setReminder({ ...m, remaining_s: minutes * 60, kind: m.kind, label: m.label }, data.now + minutes * 60);
+  if (!("Notification" in window)) openSheet(m.id); // show the calendar reminder button
+}
+
+function icsUrl(m) {
+  const ends = Math.round(nowServer() + m.remaining_s);
+  return `${API}/reminder.ics?ends=${ends}&label=${encodeURIComponent(m.label)}&kind=${m.kind}&lang=${lang}`;
 }
 
 // ---------- notifications (local only) ----------

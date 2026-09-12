@@ -239,6 +239,7 @@ button { font: inherit; color: inherit; }
   display: inline-flex; align-items: center; justify-content: center; gap: 8px;
   transition: filter .12s ease, transform .12s ease;
 }
+a.btn { text-decoration: none; }
 .btn:active { transform: scale(.98); }
 .btn:disabled { opacity: .5; cursor: default; }
 .btn--primary { background: var(--ink); color: var(--ground); border-color: var(--ink); }

@@ -88,6 +88,37 @@ app.get("/api/busy", async (c) => {
   return c.json({ weeks, samples: times.length, tz_offset_min: tzOffsetMin, matrix: busyMatrix(times, tzOffsetMin) });
 });
 
+// Calendar reminder: an .ics event that ends when the cycle ends. Everything comes from the
+// query string; nothing is stored or logged. Works on every phone without installing the app.
+app.get("/api/reminder.ics", (c) => {
+  const ends = Number(c.req.query("ends"));
+  const label = (c.req.query("label") ?? "").replace(/[^\w\s#°-]/g, "").slice(0, 40) || "?";
+  const kind = c.req.query("kind") === "dryer" ? "dryer" : "washer";
+  const lang = c.req.query("lang") === "en" ? "en" : "fr";
+  const now = nowS();
+  if (!Number.isFinite(ends) || ends < now - 3600 || ends > now + 24 * 3600) return c.json({ error: "invalid_time" }, 400);
+  const title = lang === "fr"
+    ? `${kind === "dryer" ? "Sèche-linge" : "Lave-linge"} n°${label} terminé`
+    : `${kind === "dryer" ? "Dryer" : "Washer"} #${label} finished`;
+  const body = lang === "fr" ? "Le cycle est fini, tu peux récupérer ton linge." : "The cycle is done, you can collect your laundry.";
+  const fmt = (t: number) => new Date(t * 1000).toISOString().replace(/[-:]/g, "").replace(/\.\d{3}Z$/, "Z");
+  const url = new URL(c.req.url).origin;
+  const ics = [
+    "BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//Laverie//reminder//FR", "CALSCALE:GREGORIAN", "METHOD:PUBLISH",
+    "BEGIN:VEVENT",
+    `UID:${crypto.randomUUID()}@laverie`,
+    `DTSTAMP:${fmt(now)}`, `DTSTART:${fmt(ends)}`, `DTEND:${fmt(ends + 15 * 60)}`,
+    `SUMMARY:${title}`, `DESCRIPTION:${body}`, `URL:${url}`,
+    "BEGIN:VALARM", "ACTION:DISPLAY", `DESCRIPTION:${title}`, "TRIGGER:PT0M", "END:VALARM",
+    "END:VEVENT", "END:VCALENDAR", "",
+  ].join("\r\n");
+  return c.body(ics, 200, {
+    "Content-Type": "text/calendar; charset=utf-8",
+    "Content-Disposition": `attachment; filename="laverie-${label}.ics"`,
+    "Cache-Control": "no-store",
+  });
+});
+
 // ---------- write ----------
 
 type Action = "start" | "collect" | "cancel" | "broken" | "fixed";
