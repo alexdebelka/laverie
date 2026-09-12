@@ -319,8 +319,15 @@ async function act(m, action, body, successMsg) {
 
 async function doStart(m, minutes, notify) {
   if (!Number.isInteger(minutes) || minutes < 1 || minutes > 180) return toast(t("err_minutes"));
+  // Ask for permission first, while we are still inside the user's tap.
+  let granted = false;
+  if (notify && "Notification" in window) {
+    granted = (Notification.permission === "granted" ? "granted" : await Notification.requestPermission()) === "granted";
+  }
   const data = await act(m, "start", { minutes }, t("start"));
-  if (data && notify) setReminder({ ...m, remaining_s: minutes * 60, kind: m.kind, label: m.label }, data.now + minutes * 60);
+  if (!data) return;
+  if (notify && !granted) toast(t("remind_denied"));
+  if (granted) setReminder({ ...m, remaining_s: minutes * 60, kind: m.kind, label: m.label }, data.now + minutes * 60);
 }
 
 // ---------- notifications (local only) ----------
@@ -361,11 +368,15 @@ async function fireReminder(id) {
   const m = state.machines.find((x) => x.id === id);
   const title = t("notif_title", t(m?.kind ?? "washer"), m?.label ?? id);
   const opts = { body: t("notif_body"), icon: "/icons/icon-192.png", badge: "/icons/icon-192.png", tag: `laverie-${id}` };
+  if (Notification.permission !== "granted") return;
   try {
-    const reg = await navigator.serviceWorker?.ready;
+    const reg = await Promise.race([navigator.serviceWorker?.ready, new Promise((r) => setTimeout(() => r(null), 1500))]);
     if (reg?.showNotification) await reg.showNotification(title, opts);
     else new Notification(title, opts);
-  } catch { /* ignore */ }
+  } catch {
+    try { new Notification(title, opts); } catch { /* ignore */ }
+  }
+  toast(title);
 }
 
 // ---------- busy hours ----------
