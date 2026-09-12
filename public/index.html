@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Laverie</title>
+  <meta name="description" content="Machines libres ou occupées dans la laverie de la résidence — statut partagé par les résidents, sans compte ni collecte de données.">
+  <meta name="theme-color" content="#F5F7FA" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#0F141A" media="(prefers-color-scheme: dark)">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="Laverie">
+  <link rel="manifest" href="/manifest.webmanifest">
+  <link rel="icon" href="/icons/icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sora:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <header class="top">
+    <div class="wrap top__row">
+      <h1 class="brand"><span class="brand__mark" aria-hidden="true"></span>Laverie</h1>
+      <div class="top__meta">
+        <span id="sync" class="sync" data-i18n="syncing">…</span>
+        <button id="lang" class="lang" type="button" aria-label="Language">EN</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <!-- Machines -->
+    <section id="view-board" class="view" data-view="board">
+      <p class="lede" data-i18n="lede">Statut partagé par les résidents. Indique quand tu lances ou récupères une machine, tout le monde en profite.</p>
+      <div id="offline" class="notice" hidden data-i18n="offline">Hors ligne — les statuts affichés peuvent être anciens.</div>
+
+      <h2 class="section-title section-title--washer"><span class="dot"></span><span data-i18n="washers">Lave-linge</span> <small>3 €</small></h2>
+      <div id="washers" class="grid" aria-live="polite"></div>
+
+      <h2 class="section-title section-title--dryer"><span class="dot"></span><span data-i18n="dryers">Sèche-linge</span> <small>0,50 € / 15 min</small></h2>
+      <div id="dryers" class="grid" aria-live="polite"></div>
+
+      <p class="legend">
+        <span class="legend__item"><i class="swatch swatch--free-washer"></i><span data-i18n="legend_free_w">libre (lavage)</span></span>
+        <span class="legend__item"><i class="swatch swatch--free-dryer"></i><span data-i18n="legend_free_d">libre (séchage)</span></span>
+        <span class="legend__item"><i class="swatch swatch--busy"></i><span data-i18n="legend_busy">occupée</span></span>
+        <span class="legend__item"><i class="swatch swatch--broken"></i><span data-i18n="legend_broken">en panne</span></span>
+      </p>
+    </section>
+
+    <!-- Busy hours -->
+    <section id="view-busy" class="view" data-view="busy" hidden>
+      <h2 class="h2" data-i18n="busy_title">Affluence</h2>
+      <p class="muted" id="busy-sub" data-i18n="busy_sub">Nombre de cycles lancés par jour et par heure, sur les dernières semaines. Plus c'est foncé, plus c'est chargé.</p>
+      <div class="heat-wrap"><div class="heat" id="heat" role="img" aria-label="Busy hours heatmap"></div></div>
+      <p class="muted small" id="busy-samples"></p>
+    </section>
+
+    <!-- Info -->
+    <section id="view-info" class="view" data-view="info" hidden>
+      <h2 class="h2" data-i18n="info_title">Infos pratiques</h2>
+      <dl class="facts">
+        <div class="facts__row"><dt data-i18n="price_wash">Lavage</dt><dd>3,00 €</dd></div>
+        <div class="facts__row"><dt data-i18n="price_dry">Séchage</dt><dd>0,50 € / 15 min</dd></div>
+        <div class="facts__row"><dt data-i18n="pay">Paiement</dt><dd data-i18n="pay_v">Espèces ou carte bancaire à la centrale de paiement. Le terminal CB a parfois des ratés : prévoir des espèces.</dd></div>
+        <div class="facts__row"><dt data-i18n="bills">Billets acceptés</dt><dd>5 €, 10 €, 20 €</dd></div>
+        <div class="facts__row"><dt data-i18n="coins">Pièces</dt><dd data-i18n="coins_v">À confirmer</dd></div>
+        <div class="facts__row"><dt data-i18n="how">Comment faire</dt><dd data-i18n="how_v">Charger la machine, fermer le hublot, choisir le programme, payer à la centrale avec le numéro de la machine, revenir appuyer sur Start. Puis indiquer le lancement ici.</dd></div>
+      </dl>
+      <h3 class="h3" data-i18n="privacy_title">Vie privée</h3>
+      <p class="muted" data-i18n="privacy_v">Pas de compte, pas de cookie, pas de suivi. L'application enregistre uniquement « machine n°X lancée à telle heure ». Le code est ouvert.</p>
+      <p class="muted small"><a id="repo-link" href="https://github.com/" target="_blank" rel="noopener">Code source</a></p>
+    </section>
+
+    <!-- Feedback -->
+    <section id="view-feedback" class="view" data-view="feedback" hidden>
+      <h2 class="h2" data-i18n="fb_title">Un avis, une idée ?</h2>
+      <p class="muted" data-i18n="fb_sub">Anonyme. Ne mets ni ton nom ni ta chambre.</p>
+      <form id="fb-form" class="fb">
+        <label class="sr-only" for="fb-message" data-i18n="fb_label">Message</label>
+        <textarea id="fb-message" name="message" rows="5" maxlength="500" required minlength="3" placeholder="…"></textarea>
+        <div class="fb__row">
+          <span id="fb-count" class="muted small">0 / 500</span>
+          <button class="btn btn--primary" type="submit" data-i18n="send">Envoyer</button>
+        </div>
+        <p id="fb-status" class="small" role="status"></p>
+      </form>
+    </section>
+  </main>
+
+  <nav class="tabs" aria-label="Sections">
+    <button class="tab is-active" data-tab="board" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="3" width="16" height="18" rx="2"/><circle cx="12" cy="13" r="4.5"/><circle cx="8" cy="6.5" r="1" fill="currentColor" stroke="none"/></svg><span data-i18n="tab_board">Machines</span></button>
+    <button class="tab" data-tab="busy" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19V9M10 19V5M16 19v-8M22 19H2"/></svg><span data-i18n="tab_busy">Affluence</span></button>
+    <button class="tab" data-tab="info" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.5"/></svg><span data-i18n="tab_info">Infos</span></button>
+    <button class="tab" data-tab="feedback" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11H9l-5 4z"/></svg><span data-i18n="tab_fb">Avis</span></button>
+  </nav>
+
+  <!-- Action sheet -->
+  <div id="sheet" class="sheet" hidden>
+    <div class="sheet__backdrop" data-close></div>
+    <div class="sheet__panel" role="dialog" aria-modal="true" aria-labelledby="sheet-title">
+      <div class="sheet__grip" aria-hidden="true"></div>
+      <h2 id="sheet-title" class="sheet__title"></h2>
+      <p id="sheet-sub" class="muted"></p>
+      <div id="sheet-body"></div>
+    </div>
+  </div>
+
+  <div id="toast" class="toast" role="status" hidden></div>
+
+  <script src="/app.js" type="module"></script>
+</body>
+</html>

@@ -1,0 +1,28 @@
+{
+  "name": "laverie",
+  "version": "0.1.0",
+  "description": "Privacy-first, crowd-sourced laundry room status board for shared housing (Cloudflare Workers + D1 + PWA).",
+  "private": true,
+  "license": "MIT",
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "db:migrate:local": "wrangler d1 migrations apply laverie --local",
+    "db:migrate:remote": "wrangler d1 migrations apply laverie --remote",
+    "db:seed:local": "wrangler d1 execute laverie --local --file=./scripts/seed.sql",
+    "db:seed:remote": "wrangler d1 execute laverie --remote --file=./scripts/seed.sql",
+    "db:feedback": "wrangler d1 execute laverie --remote --command=\"SELECT id, datetime(created_at,'unixepoch') AS at, message FROM feedback ORDER BY id DESC LIMIT 50\""
+  },
+  "dependencies": {
+    "hono": "^4.13.7"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^5.20260911.1",
+    "typescript": "^5.9.3",
+    "vitest": "^3.2.7",
+    "wrangler": "^4.131.1"
+  }
+}
