@@ -1,5 +1,7 @@
 # Laverie
 
+Live: https://laverie.laverie.workers.dev · Source: https://github.com/alexdebelka/laverie
+
 A privacy-first, crowd-sourced status board for a shared laundry room. Residents tap
 "started" / "collected" / "out of order" on their phone; everyone else sees which machines
 are free, when a cycle ends, and which machines are broken.
