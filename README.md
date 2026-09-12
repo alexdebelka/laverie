@@ -1,6 +1,6 @@
 # Laverie
 
-Live: [http://laverie.uk/](https://laverie.uk/) · https://laverie.laverie.workers.dev · Source: https://github.com/alexdebelka/laverie
+Live: https://laverie.uk/ · https://laverie.laverie.workers.dev · Source: https://github.com/alexdebelka/laverie
 
 A privacy-first, crowd-sourced status board for a shared laundry room. Residents tap
 "started" / "collected" / "out of order" on their phone; everyone else sees which machines
