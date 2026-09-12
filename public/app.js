@@ -104,6 +104,7 @@ const state = {
   mine: store.get("mine", {}),         // { [id]: startedAtServerSeconds }
   reminders: store.get("reminders", {}), // { [id]: endsAtServerSeconds }
   open: null,            // machine id open in the sheet
+  sheetStatus: null,     // status the open sheet was rendered for
 };
 
 const $ = (s, r = document) => r.querySelector(s);
@@ -181,17 +182,25 @@ function renderBoard() {
   const w = $("#washers"), d = $("#dryers");
   w.replaceChildren(...ms.filter((m) => m.kind === "washer").map(card));
   d.replaceChildren(...ms.filter((m) => m.kind === "dryer").map(card));
-  if (state.open !== null) renderSheet();
+  if (state.open !== null) {
+    // Only rebuild the sheet when the machine's status changed; otherwise just
+    // refresh the countdown text, so typed input is never wiped mid-edit.
+    const m = ms.find((x) => x.id === state.open);
+    if (!m) closeSheet();
+    else if (m.status !== state.sheetStatus) renderSheet();
+    else if (m.status === "running") $("#sheet-sub").textContent = t("sheet_running", fmtDuration(m.remaining_s));
+  }
 }
 
 // ---------- sheet ----------
 function openSheet(id) { state.open = id; $("#sheet").hidden = false; renderSheet(); }
-function closeSheet() { state.open = null; $("#sheet").hidden = true; }
+function closeSheet() { state.open = null; state.sheetStatus = null; $("#sheet").hidden = true; }
 
 function renderSheet() {
   const raw = state.machines.find((x) => x.id === state.open);
   if (!raw) return closeSheet();
   const m = live(raw);
+  state.sheetStatus = m.status;
   const kindLabel = t(m.kind);
   $("#sheet-title").textContent = t("machine", kindLabel, m.label);
   const body = $("#sheet-body");
