@@ -16,7 +16,7 @@ run_worker_first = ["/api/*"]
 [[d1_databases]]
 binding = "DB"
 database_name = "laverie"
-database_id = "REPLACE_WITH_YOUR_D1_DATABASE_ID"
+database_id = "3d8e1003-8463-4c35-89f2-33e836a3149b"
 migrations_dir = "migrations"
 
 [vars]
