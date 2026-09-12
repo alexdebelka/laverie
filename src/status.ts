@@ -94,7 +94,7 @@ export function toView(row: MachineRow, now: number, cfg: Config = DEFAULT_CONFI
 }
 
 /** Allowed cycle lengths entered by users, in minutes. */
-export const MIN_CYCLE_MIN = 5;
+export const MIN_CYCLE_MIN = 1;
 export const MAX_CYCLE_MIN = 180;
 
 export function validMinutes(v: unknown): v is number {

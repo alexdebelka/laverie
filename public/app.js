@@ -43,7 +43,7 @@ const I18N = {
     fixed: "Elle remarche", report_again: "Toujours en panne", note_ph: "Quel problème ? (facultatif)",
     remind: "Me prévenir à la fin", remind_set: "Rappel activé", remind_denied: "Notifications refusées par le navigateur",
     notif_title: (k, l) => `${k} n°${l} terminée`, notif_body: "Le cycle est fini, tu peux récupérer ton linge.",
-    err_running: "Quelqu'un vient de la lancer.", err_rate: "Trop d'actions, patiente une minute.", err_generic: "Ça n'a pas marché, réessaie.",
+    err_running: "Quelqu'un vient de la lancer.", err_minutes: "Durée entre 1 et 180 min.", err_broken: "Signalée en panne, appuie d'abord sur « Elle remarche ».", err_rate: "Trop d'actions, patiente une minute.", err_generic: "Ça n'a pas marché, réessaie.",
     days: ["Lun", "Mar", "Mer", "Jeu", "Ven", "Sam", "Dim"],
     m: "min", h: "h", d: "j",
   },
@@ -82,7 +82,7 @@ const I18N = {
     fixed: "It works again", report_again: "Still broken", note_ph: "What's wrong? (optional)",
     remind: "Notify me when done", remind_set: "Reminder set", remind_denied: "Notifications blocked by the browser",
     notif_title: (k, l) => `${k} #${l} finished`, notif_body: "The cycle is done, you can collect your laundry.",
-    err_running: "Someone just started it.", err_rate: "Too many actions, wait a minute.", err_generic: "That didn't work, try again.",
+    err_running: "Someone just started it.", err_minutes: "Length must be 1–180 min.", err_broken: "Reported out of order, tap \"It works again\" first.", err_rate: "Too many actions, wait a minute.", err_generic: "That didn't work, try again.",
     days: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
     m: "min", h: "h", d: "d",
   },
@@ -212,7 +212,7 @@ function renderSheet() {
     $("#sheet-sub").textContent = t("sheet_free");
     let minutes = PRESETS[m.kind][1];
     const chips = PRESETS[m.kind].map((v) => el("button", { class: "chip", type: "button", "aria-pressed": String(v === minutes), onclick: (e) => { minutes = v; input.value = v; chips.forEach((c) => c.setAttribute("aria-pressed", String(c === e.currentTarget))); } }, `${v} ${t("minutes")}`));
-    const input = el("input", { type: "number", id: "minutes", min: 5, max: 180, step: 1, value: minutes, inputmode: "numeric",
+    const input = el("input", { type: "number", id: "minutes", min: 1, max: 180, step: 1, value: minutes, inputmode: "numeric",
       oninput: (e) => { minutes = Number(e.target.value); chips.forEach((c) => c.setAttribute("aria-pressed", "false")); } });
     const notify = el("input", { type: "checkbox", id: "notify", checked: "Notification" in window && Notification.permission === "granted" ? "" : null });
     if (!("Notification" in window)) notify.disabled = true;
@@ -309,14 +309,14 @@ async function act(m, action, body, successMsg) {
     if (successMsg) toast(successMsg);
     return data;
   } catch (e) {
-    toast(e.code === "already_running" ? t("err_running") : e.status === 429 ? t("err_rate") : t("err_generic"));
+    toast(e.code === "already_running" ? t("err_running") : e.code === "invalid_minutes" ? t("err_minutes") : e.code === "broken" ? t("err_broken") : e.status === 429 ? t("err_rate") : t("err_generic"));
     await refresh();
     return null;
   }
 }
 
 async function doStart(m, minutes, notify) {
-  if (!Number.isInteger(minutes) || minutes < 5 || minutes > 180) return toast(t("err_generic"));
+  if (!Number.isInteger(minutes) || minutes < 1 || minutes > 180) return toast(t("err_minutes"));
   const data = await act(m, "start", { minutes }, t("start"));
   if (data && notify) setReminder({ ...m, remaining_s: minutes * 60, kind: m.kind, label: m.label }, data.now + minutes * 60);
 }

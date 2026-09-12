@@ -73,7 +73,7 @@ All responses are JSON and `Cache-Control: no-store`.
 | Method | Path                            | Body                 | Notes |
 |--------|---------------------------------|----------------------|-------|
 | GET    | `/api/machines`                 |                      | All machines with derived status |
-| POST   | `/api/machines/:id/start`       | `{ "minutes": 45 }`  | 5–180 min; 409 if running or broken |
+| POST   | `/api/machines/:id/start`       | `{ "minutes": 45 }`  | 1–180 min; 409 if running or broken |
 | POST   | `/api/machines/:id/collect`     |                      | Frees a running/done machine |
 | POST   | `/api/machines/:id/cancel`      |                      | Same as collect, logged as a mistake |
 | POST   | `/api/machines/:id/broken`      | `{ "note": "…" }`    | Note optional, ≤ 140 chars |

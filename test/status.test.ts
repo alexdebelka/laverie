@@ -67,9 +67,9 @@ describe("toView", () => {
 describe("validMinutes", () => {
   it("accepts integers in range only", () => {
     expect(validMinutes(45)).toBe(true);
-    expect(validMinutes(5)).toBe(true);
+    expect(validMinutes(1)).toBe(true);
     expect(validMinutes(180)).toBe(true);
-    expect(validMinutes(4)).toBe(false);
+    expect(validMinutes(0)).toBe(false);
     expect(validMinutes(181)).toBe(false);
     expect(validMinutes(45.5)).toBe(false);
     expect(validMinutes("45")).toBe(false);
