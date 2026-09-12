@@ -42,7 +42,7 @@ const I18N = {
     notify_unsupported_short: "Après le lancement, tu pourras ajouter un rappel dans ton calendrier.",
     start: "Lancée !", collected: "Récupéré, machine libre", cancel: "Erreur, annuler", report_broken: "Signaler en panne",
     fixed: "Elle remarche", report_again: "Toujours en panne", note_ph: "Quel problème ? (facultatif)",
-    remind: "Me prévenir à la fin", calendar: "Rappel dans mon calendrier", calendar_hint: "Crée un événement avec alarme à la fin du cycle, sur ton téléphone uniquement.", remind_set: "Rappel activé", remind_denied: "Notifications refusées par le navigateur",
+    remind: "Me prévenir à la fin", calendar: "Rappel dans mon calendrier", timer: "Minuteur dans l'app Horloge", calendar_hint: "Crée un événement avec alarme à la fin du cycle, sur ton téléphone uniquement.", remind_set: "Rappel activé", remind_denied: "Notifications refusées par le navigateur",
     notif_title: (k, l) => `${k} n°${l} terminée`, notif_body: "Le cycle est fini, tu peux récupérer ton linge.",
     err_running: "Quelqu'un vient de la lancer.", err_minutes: "Durée entre 1 et 180 min.", err_broken: "Signalée en panne, appuie d'abord sur « Elle remarche ».", err_rate: "Trop d'actions, patiente une minute.", err_generic: "Ça n'a pas marché, réessaie.",
     days: ["Lun", "Mar", "Mer", "Jeu", "Ven", "Sam", "Dim"],
@@ -82,7 +82,7 @@ const I18N = {
     notify_unsupported_short: "After starting, you can add a reminder to your calendar.",
     start: "Started!", collected: "Collected, machine is free", cancel: "Mistake, cancel", report_broken: "Report out of order",
     fixed: "It works again", report_again: "Still broken", note_ph: "What's wrong? (optional)",
-    remind: "Notify me when done", calendar: "Reminder in my calendar", calendar_hint: "Creates a calendar event with an alarm at the end of the cycle, on your phone only.", remind_set: "Reminder set", remind_denied: "Notifications blocked by the browser",
+    remind: "Notify me when done", calendar: "Reminder in my calendar", timer: "Timer in the Clock app", calendar_hint: "Creates a calendar event with an alarm at the end of the cycle, on your phone only.", remind_set: "Reminder set", remind_denied: "Notifications blocked by the browser",
     notif_title: (k, l) => `${k} #${l} finished`, notif_body: "The cycle is done, you can collect your laundry.",
     err_running: "Someone just started it.", err_minutes: "Length must be 1–180 min.", err_broken: "Reported out of order, tap \"It works again\" first.", err_rate: "Too many actions, wait a minute.", err_generic: "That didn't work, try again.",
     days: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
@@ -242,6 +242,7 @@ function renderSheet() {
           ? el("button", { class: "btn", type: "button", disabled: hasReminder ? "" : null, onclick: () => setReminder(m) }, hasReminder ? t("remind_set") : t("remind"))
           : null,
         m.status === "running" ? el("a", { class: "btn", href: icsUrl(m), target: "_blank", rel: "noopener" }, t("calendar")) : null,
+        m.status === "running" && IS_ANDROID ? el("a", { class: "btn", href: timerUrl(m) }, t("timer")) : null,
         m.status === "running" ? el("p", { class: "hint" }, t("calendar_hint")) : null,
         m.status === "running" && state.mine[m.id] !== undefined
           ? el("button", { class: "btn", type: "button", onclick: () => act(m, "cancel", {}, null) }, t("cancel"))
@@ -333,7 +334,16 @@ async function doStart(m, minutes, notify) {
   if (!data) return;
   if (notify && !granted) toast(t("remind_denied"));
   if (granted) setReminder({ ...m, remaining_s: minutes * 60, kind: m.kind, label: m.label }, data.now + minutes * 60);
-  if (!("Notification" in window)) openSheet(m.id); // show the calendar reminder button
+  openSheet(m.id); // reopen with the reminder options (calendar / timer)
+}
+
+const IS_ANDROID = /android/i.test(navigator.userAgent);
+
+/** Android only: opens the Clock app with a timer prefilled (intent URL, handled by Chrome). */
+function timerUrl(m) {
+  const secs = Math.max(60, Math.round(m.remaining_s));
+  const msg = encodeURIComponent(t("machine", t(m.kind), m.label));
+  return `intent://#Intent;action=android.intent.action.SET_TIMER;i.android.intent.extra.alarm.LENGTH=${secs};S.android.intent.extra.alarm.MESSAGE=${msg};B.android.intent.extra.alarm.SKIP_UI=false;end`;
 }
 
 function icsUrl(m) {
